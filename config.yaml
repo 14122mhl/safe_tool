@@ -1,0 +1,39 @@
+risk_rules:
+  shell:
+    risk: HIGH
+    reason: runs arbitrary shell commands and may change system state
+    recommendation: review command content carefully and run with --limit first
+  service:
+    risk: HIGH
+    reason: may start, stop, or restart services and affect availability
+    recommendation: avoid full rollout; use --limit or staged rollout
+  systemd:
+    risk: HIGH
+    reason: may alter service state through systemd
+    recommendation: use --limit and validate service impact before apply
+  reboot:
+    risk: HIGH
+    reason: will reboot target machines
+    recommendation: run in controlled batches and verify redundancy
+  copy:
+    risk: MEDIUM
+    reason: modifies files on target hosts
+    recommendation: review --diff output before apply
+  template:
+    risk: MEDIUM
+    reason: renders and writes configuration files
+    recommendation: review generated diff and service reload impact
+  file:
+    risk: MEDIUM
+    reason: changes files, directories, ownership, or permissions
+    recommendation: verify paths and ownership before apply
+  debug:
+    risk: LOW
+    reason: prints information only
+    recommendation: safe to inspect; ensure no secrets are printed
+
+settings:
+  default_engine: ansible
+  default_env: dev
+  require_prod_confirm: true
+  dry_run_by_default: true

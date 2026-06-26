@@ -1,0 +1,7 @@
+- name: Demo safe playbook
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Print demo message
+      debug:
+        msg: safe-tool demo
