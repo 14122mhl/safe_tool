@@ -1,0 +1,130 @@
+- name: Comprehensive safe-tool demo playbook
+  hosts: all
+  gather_facts: false
+  vars:
+    app_name: safe-demo
+    deploy_root: /tmp/safe-tool-demo
+    env: "{{ env | default('dev') }}"
+    feature_flag: "{{ feature_flag | default('false') | bool }}"
+    service_name: cron
+
+  pre_tasks:
+    - name: Show run context
+      debug:
+        msg:
+          - "app={{ app_name }}"
+          - "env={{ env }}"
+          - "feature_flag={{ feature_flag }}"
+          - "deploy_root={{ deploy_root }}"
+
+    - name: Validate env input
+      assert:
+        that:
+          - env in ['dev', 'test', 'stage', 'staging', 'prod', 'production']
+        fail_msg: "invalid env={{ env }}"
+        success_msg: "env is valid: {{ env }}"
+
+  tasks:
+    - name: Ensure workspace directory exists
+      file:
+        path: "{{ deploy_root }}"
+        state: directory
+        mode: "0755"
+
+    - name: Write baseline app config
+      copy:
+        dest: "{{ deploy_root }}/app.conf"
+        mode: "0644"
+        content: |
+          APP_NAME={{ app_name }}
+          ENV={{ env }}
+          FEATURE_FLAG={{ feature_flag }}
+      notify: Restart demo service
+
+    - name: Add release metadata line
+      lineinfile:
+        path: "{{ deploy_root }}/app.conf"
+        line: "RELEASE=2026-06-29"
+        create: true
+
+    - name: Ensure no DEBUG=true in config
+      replace:
+        path: "{{ deploy_root }}/app.conf"
+        regexp: '^DEBUG=true$'
+        replace: 'DEBUG=false'
+
+    - name: Create env marker using command
+      command: >-
+        /bin/sh -c 'echo "{{ env }}" > "{{ deploy_root }}/env.marker"'
+
+    - name: Optional feature branch using set_fact + when
+      set_fact:
+        rollout_mode: "{{ 'canary' if feature_flag else 'standard' }}"
+
+    - name: Print rollout mode
+      debug:
+        msg: "rollout_mode={{ rollout_mode }}"
+
+    - name: High-risk shell demo in non-prod only
+      shell: >-
+        /bin/sh -c 'echo "simulate shell step for {{ app_name }}" >> "{{ deploy_root }}/ops.log"'
+      when: env not in ['prod', 'production']
+
+    - name: Apply package management example for Debian family
+      apt:
+        name: curl
+        state: present
+        update_cache: false
+      when: env in ['dev', 'test']
+      ignore_errors: true
+
+    - name: Manage service state (high risk)
+      service:
+        name: "{{ service_name }}"
+        state: started
+      ignore_errors: true
+
+    - name: Demonstrate safe error handling block
+      block:
+        - name: Check generated files
+          command: >-
+            /bin/sh -c 'ls -1 "{{ deploy_root }}"'
+          register: listing
+
+        - name: Print listing lines
+          debug:
+            var: listing.stdout_lines
+      rescue:
+        - name: Rescue branch when previous task fails
+          debug:
+            msg: "block failed; entering rescue path"
+      always:
+        - name: Always branch executes
+          debug:
+            msg: "always path reached"
+
+    - name: Cron job example (medium risk)
+      cron:
+        name: "safe demo heartbeat"
+        minute: "*/30"
+        job: "echo safe-demo >> /tmp/safe-demo-heartbeat.log"
+
+    - name: Production explicit no-op guard task
+      debug:
+        msg: "production run detected; keep risky tasks tightly controlled"
+      when: env in ['prod', 'production']
+
+  handlers:
+    - name: Restart demo service
+      systemd:
+        name: "{{ service_name }}"
+        state: restarted
+      ignore_errors: true
+
+  post_tasks:
+    - name: Show completion summary
+      debug:
+        msg:
+          - "completed demo1.yml"
+          - "env={{ env }}"
+          - "deploy_root={{ deploy_root }}"

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "playbook_exists",
+    "status": "PASS",
+    "message": "found /Users/hemu/safe-tool/demo.yml",
+    "remediation": null
+  },
+  {
+    "name": "inventory",
+    "status": "PASS",
+    "message": "found /Users/hemu/safe-tool/inventory.ini",
+    "remediation": null
+  },
+  {
+    "name": "env",
+    "status": "PASS",
+    "message": "env=dev",
+    "remediation": null
+  },
+  {
+    "name": "risk_scan",
+    "status": "PASS",
+    "message": "no high-risk module hints detected by static analysis",
+    "remediation": null
+  },
+  {
+    "name": "hosts_scope",
+    "status": "WARN",
+    "message": "playbook targets hosts: all",
+    "remediation": "use --limit or narrower host groups for safer rollout"
+  },
+  {
+    "name": "ansible_syntax",
+    "status": "PASS",
+    "message": "syntax check passed",
+    "remediation": null
+  },
+  {
+    "name": "ansible_list_hosts",
+    "status": "PASS",
+    "message": "host listing succeeded; hosts matched=1",
+    "remediation": null
+  },
+  {
+    "name": "ansible_list_tasks",
+    "status": "PASS",
+    "message": "task listing succeeded",
+    "remediation": null
+  }
+]
